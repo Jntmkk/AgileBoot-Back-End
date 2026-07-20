@@ -42,5 +42,18 @@ springdoc:
       packages-to-scan: com.agileboot.admin.controller.common
     - group: '内置系统API'
       packages-to-scan: com.agileboot.admin.controller.system
+    - group: '社交媒体API'
+      packages-to-scan: com.agileboot.admin.controller.social
+
+# SocialMedia-Hub 接入配置
+social:
+  # 账号容器访问基址（不含端口）：账号容器地址 = base-url + (18060 + 账号ID)
+  # 本地开发：http://host.docker.internal（后端容器访问宿主机上的节点容器）
+  # 生产环境：http://frpc-visitor（经 stcp 隧道到住宅节点）
+  base-url: http://host.docker.internal
+  port-base: 18060
+  # 节点心跳令牌（X-Node-Token），与节点 agent 的 NODE_TOKEN 一致
+  node-token: changeme
+  http-timeout-ms: 90000
 
 
