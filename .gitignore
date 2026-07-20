@@ -48,3 +48,6 @@ nbdist/
 
 /agileboot-admin/src/main/resources/application-prod.yml
 
+
+# CodeGraph index
+.codegraph/
