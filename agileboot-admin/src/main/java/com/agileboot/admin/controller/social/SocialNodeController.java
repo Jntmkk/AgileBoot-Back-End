@@ -3,7 +3,6 @@ package com.agileboot.admin.controller.social;
 import cn.hutool.core.util.StrUtil;
 import com.agileboot.common.core.base.BaseController;
 import com.agileboot.common.core.dto.ResponseDTO;
-import com.agileboot.common.core.page.AbstractPageQuery;
 import com.agileboot.common.core.page.PageDTO;
 import com.agileboot.common.exception.ApiException;
 import com.agileboot.common.exception.error.ErrorCode.Client;
@@ -12,6 +11,7 @@ import com.agileboot.domain.social.node.SocialNodeApplicationService;
 import com.agileboot.domain.social.node.command.NodeHeartbeatCommand;
 import com.agileboot.domain.social.node.db.SocialNodeEntity;
 import com.agileboot.domain.social.node.dto.SocialNodeDTO;
+import com.agileboot.domain.social.node.query.SocialNodeQuery;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import javax.validation.Valid;
@@ -47,7 +47,7 @@ public class SocialNodeController extends BaseController {
     @Operation(summary = "节点列表")
     @PreAuthorize("@permission.has('social:node:list')")
     @GetMapping
-    public ResponseDTO<PageDTO<SocialNodeDTO>> list(AbstractPageQuery<SocialNodeEntity> query) {
+    public ResponseDTO<PageDTO<SocialNodeDTO>> list(SocialNodeQuery query) {
         return ResponseDTO.ok(nodeApplicationService.getNodeList(query));
     }
 

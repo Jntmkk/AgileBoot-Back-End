@@ -1,11 +1,11 @@
 package com.agileboot.domain.social.node;
 
 import com.agileboot.common.core.page.PageDTO;
-import com.agileboot.common.core.page.AbstractPageQuery;
 import com.agileboot.domain.social.node.command.NodeHeartbeatCommand;
 import com.agileboot.domain.social.node.db.SocialNodeEntity;
 import com.agileboot.domain.social.node.db.SocialNodeService;
 import com.agileboot.domain.social.node.dto.SocialNodeDTO;
+import com.agileboot.domain.social.node.query.SocialNodeQuery;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import java.util.Date;
 import java.util.List;
@@ -22,7 +22,7 @@ public class SocialNodeApplicationService {
 
     private final SocialNodeService nodeService;
 
-    public PageDTO<SocialNodeDTO> getNodeList(AbstractPageQuery<SocialNodeEntity> query) {
+    public PageDTO<SocialNodeDTO> getNodeList(SocialNodeQuery query) {
         Page<SocialNodeEntity> page = nodeService.page(query.toPage(), query.toQueryWrapper());
         List<SocialNodeDTO> records =
             page.getRecords().stream().map(SocialNodeDTO::new).collect(Collectors.toList());
