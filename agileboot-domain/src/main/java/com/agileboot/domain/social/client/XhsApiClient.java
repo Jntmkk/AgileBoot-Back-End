@@ -9,6 +9,7 @@ import com.agileboot.common.exception.ApiException;
 import com.agileboot.common.exception.error.ErrorCode.Internal;
 import com.agileboot.domain.social.client.dto.XhsLoginStatus;
 import com.agileboot.domain.social.client.dto.XhsQrcode;
+import com.agileboot.domain.social.client.dto.XhsUserBasicInfo;
 import com.agileboot.domain.social.config.SocialMediaProperties;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -43,6 +44,20 @@ public class XhsApiClient {
     public XhsQrcode getLoginQrcode(Long accountId) {
         JSONObject data = get(accountId, "/api/v1/login/qrcode");
         return data.toBean(XhsQrcode.class);
+    }
+
+    /**
+     * 获取"我的主页"基本信息（昵称/小红书号/头像）。
+     * 注意该接口响应是双层 data 包裹：data.data.userBasicInfo。
+     */
+    public XhsUserBasicInfo getMyProfile(Long accountId) {
+        JSONObject data = get(accountId, "/api/v1/user/me");
+        JSONObject inner = data.getJSONObject("data");
+        if (inner == null) {
+            return null;
+        }
+        JSONObject basicInfo = inner.getJSONObject("userBasicInfo");
+        return basicInfo == null ? null : basicInfo.toBean(XhsUserBasicInfo.class);
     }
 
     /**

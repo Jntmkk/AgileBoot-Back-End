@@ -16,16 +16,19 @@ import com.agileboot.domain.social.account.model.SocialAccountModelFactory;
 import com.agileboot.domain.social.account.query.SocialAccountQuery;
 import com.agileboot.domain.social.client.XhsApiClient;
 import com.agileboot.domain.social.client.dto.XhsLoginStatus;
+import com.agileboot.domain.social.client.dto.XhsUserBasicInfo;
 import com.agileboot.domain.social.client.dto.XhsQrcode;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import java.util.List;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 /**
  * @author SocialMedia-Hub
  */
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class SocialAccountApplicationService {
@@ -69,11 +72,35 @@ public class SocialAccountApplicationService {
     }
 
     /**
-     * 查询账号实时登录状态（透传账号容器）
+     * 查询账号实时登录状态（透传账号容器）。
+     * 已登录时补充真实昵称/小红书号，并把小红书号回写到账号记录。
      */
     public XhsLoginStatus checkLoginStatus(Long accountId) {
         SocialAccountEntity account = loadEnabledXhsAccount(accountId);
-        return xhsApiClient.checkLoginStatus(account.getId());
+        XhsLoginStatus status = xhsApiClient.checkLoginStatus(account.getId());
+        if (Boolean.TRUE.equals(status.getIsLoggedIn())) {
+            enrichWithProfile(account, status);
+        }
+        return status;
+    }
+
+    private void enrichWithProfile(SocialAccountEntity account, XhsLoginStatus status) {
+        try {
+            XhsUserBasicInfo basicInfo = xhsApiClient.getMyProfile(account.getId());
+            if (basicInfo == null) {
+                return;
+            }
+            status.setNickname(basicInfo.getNickname());
+            status.setRedId(basicInfo.getRedId());
+            // 小红书号变化时回写（正常只会在首次登录后写一次）
+            if (basicInfo.getRedId() != null && !basicInfo.getRedId().equals(account.getXhsUserId())) {
+                account.setXhsUserId(basicInfo.getRedId());
+                account.updateById();
+            }
+        } catch (Exception e) {
+            // 主页信息获取失败不影响登录状态本身
+            log.warn("获取账号 {} 的小红书主页信息失败: {}", account.getId(), e.getMessage());
+        }
     }
 
     /**

@@ -17,4 +17,14 @@ public class XhsLoginStatus {
 
     private String username;
 
+    /**
+     * 真实账号昵称（登录时由 /user/me 补充）
+     */
+    private String nickname;
+
+    /**
+     * 小红书号（登录时由 /user/me 补充）
+     */
+    private String redId;
+
 }
