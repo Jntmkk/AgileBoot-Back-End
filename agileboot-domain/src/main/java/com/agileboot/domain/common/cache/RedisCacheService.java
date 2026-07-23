@@ -5,6 +5,7 @@ import com.agileboot.infrastructure.cache.RedisUtil;
 import com.agileboot.infrastructure.cache.redis.CacheKeyEnum;
 import com.agileboot.infrastructure.cache.redis.RedisCacheTemplate;
 import com.agileboot.infrastructure.user.web.SystemLoginUser;
+import com.agileboot.domain.social.credential.BiliLoginSession;
 import com.agileboot.domain.system.post.db.SysPostEntity;
 import com.agileboot.domain.system.role.db.SysRoleEntity;
 import com.agileboot.domain.system.user.db.SysUserEntity;
@@ -32,12 +33,19 @@ public class RedisCacheService {
 
     public RedisCacheTemplate<SysPostEntity> postCache;
 
+    /**
+     * B站扫码登录会话（qrcode_key + buvid3/buvid4，临时态无DB回调）
+     */
+    public RedisCacheTemplate<BiliLoginSession> biliLoginSessionCache;
+
 //    public RedisCacheTemplate<RoleInfo> roleModelInfoCache;
 
     @PostConstruct
     public void init() {
 
         captchaCache = new RedisCacheTemplate<>(redisUtil, CacheKeyEnum.CAPTCHAT);
+
+        biliLoginSessionCache = new RedisCacheTemplate<>(redisUtil, CacheKeyEnum.SOCIAL_BILI_LOGIN_SESSION);
 
         loginUserCache = new RedisCacheTemplate<>(redisUtil, CacheKeyEnum.LOGIN_USER_KEY);
 

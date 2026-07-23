@@ -7,9 +7,6 @@ import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.agileboot.common.exception.ApiException;
 import com.agileboot.common.exception.error.ErrorCode.Internal;
-import com.agileboot.domain.social.client.dto.XhsLoginStatus;
-import com.agileboot.domain.social.client.dto.XhsQrcode;
-import com.agileboot.domain.social.client.dto.XhsUserBasicInfo;
 import com.agileboot.domain.social.config.SocialMediaProperties;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -19,6 +16,7 @@ import org.springframework.stereotype.Component;
  * 小红书账号容器 API 客户端（xiaohongshu-mcp 的 /api/v1/*）。
  * <p>
  * 地址解析：base-url + (portBase + 账号ID)，后端不感知账号所在节点。
+ * 返回原始 data 节点（JSONObject），通用DTO映射由 {@link XhsPlatformClient} 完成。
  *
  * @author SocialMedia-Hub
  */
@@ -36,28 +34,31 @@ public class XhsApiClient {
         return properties.getBaseUrl() + ":" + (properties.getPortBase() + accountId.intValue());
     }
 
-    public XhsLoginStatus checkLoginStatus(Long accountId) {
-        JSONObject data = get(accountId, "/api/v1/login/status");
-        return data.toBean(XhsLoginStatus.class);
-    }
-
-    public XhsQrcode getLoginQrcode(Long accountId) {
-        JSONObject data = get(accountId, "/api/v1/login/qrcode");
-        return data.toBean(XhsQrcode.class);
+    /**
+     * 登录状态 data 节点（is_logged_in/username 等）
+     */
+    public JSONObject checkLoginStatus(Long accountId) {
+        return get(accountId, "/api/v1/login/status");
     }
 
     /**
-     * 获取"我的主页"基本信息（昵称/小红书号/头像）。
-     * 注意该接口响应是双层 data 包裹：data.data.userBasicInfo。
+     * 登录二维码 data 节点（img/timeout/is_logged_in）
      */
-    public XhsUserBasicInfo getMyProfile(Long accountId) {
+    public JSONObject getLoginQrcode(Long accountId) {
+        return get(accountId, "/api/v1/login/qrcode");
+    }
+
+    /**
+     * "我的主页"基本信息节点（昵称/小红书号/头像）。
+     * 注意该接口响应是双层 data 包裹：data.data.userBasicInfo，这里直接返回 userBasicInfo 节点。
+     */
+    public JSONObject getMyProfile(Long accountId) {
         JSONObject data = get(accountId, "/api/v1/user/me");
         JSONObject inner = data.getJSONObject("data");
         if (inner == null) {
             return null;
         }
-        JSONObject basicInfo = inner.getJSONObject("userBasicInfo");
-        return basicInfo == null ? null : basicInfo.toBean(XhsUserBasicInfo.class);
+        return inner.getJSONObject("userBasicInfo");
     }
 
     /**

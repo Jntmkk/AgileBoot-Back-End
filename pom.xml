@@ -33,6 +33,9 @@
         <velocity.version>2.3</velocity.version>
         <jwt.version>0.9.1</jwt.version>
         <hutool.version>5.7.22</hutool.version>
+        <retrofit.version>2.9.0</retrofit.version>
+        <okhttp.version>3.14.9</okhttp.version>
+        <zxing.version>3.5.1</zxing.version>
         <lombok.version>1.18.30</lombok.version>
         <mybatis-plus.version>3.5.2</mybatis-plus.version>
         <mybatis-plus-generator.version>3.5.1</mybatis-plus-generator.version>
@@ -51,6 +54,8 @@
         <junit.jupiter.version>5.9.2</junit.jupiter.version>
         <!-- Mockito 版本（或直接用 mockito-inline）-->
         <mockito.version>4.11.0</mockito.version>
+        <!-- 默认跳过测试；跑测试用 -DskipTests=false 覆盖 -->
+        <skipTests>true</skipTests>
     </properties>
 
     <!-- 依赖声明 -->
@@ -214,6 +219,36 @@
                 <version>${hutool.version}</version>
             </dependency>
 
+            <!-- 声明式HTTP客户端（B站API）：接口+注解，动态代理生成实现 -->
+            <dependency>
+                <groupId>com.squareup.retrofit2</groupId>
+                <artifactId>retrofit</artifactId>
+                <version>${retrofit.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.squareup.retrofit2</groupId>
+                <artifactId>converter-jackson</artifactId>
+                <version>${retrofit.version}</version>
+            </dependency>
+            <!-- 3.14.9是最后一个纯Java版，避免引入kotlin-stdlib -->
+            <dependency>
+                <groupId>com.squareup.okhttp3</groupId>
+                <artifactId>okhttp</artifactId>
+                <version>${okhttp.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.squareup.okhttp3</groupId>
+                <artifactId>logging-interceptor</artifactId>
+                <version>${okhttp.version}</version>
+            </dependency>
+
+            <!-- hutool QrCodeUtil 渲染二维码依赖zxing -->
+            <dependency>
+                <groupId>com.google.zxing</groupId>
+                <artifactId>core</artifactId>
+                <version>${zxing.version}</version>
+            </dependency>
+
             <dependency>
                 <groupId>org.projectlombok</groupId>
                 <artifactId>lombok</artifactId>
@@ -349,9 +384,9 @@
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-surefire-plugin</artifactId>
                     <version>${maven.surefire.plugin.version}</version>
-                    <!-- 想跑test的话  设置成false  -->
+                    <!-- 想跑test的话  -DskipTests=false  -->
                     <configuration>
-                        <skipTests>true</skipTests>
+                        <skipTests>${skipTests}</skipTests>
                     </configuration>
                 </plugin>
                 <plugin>

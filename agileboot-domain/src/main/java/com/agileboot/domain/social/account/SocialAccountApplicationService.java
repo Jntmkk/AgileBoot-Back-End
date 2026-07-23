@@ -14,10 +14,12 @@ import com.agileboot.domain.social.account.dto.SocialAccountDTO;
 import com.agileboot.domain.social.account.model.SocialAccountModel;
 import com.agileboot.domain.social.account.model.SocialAccountModelFactory;
 import com.agileboot.domain.social.account.query.SocialAccountQuery;
+import com.agileboot.domain.social.client.SocialPlatformClient;
+import com.agileboot.domain.social.client.SocialPlatformClientFactory;
 import com.agileboot.domain.social.client.XhsApiClient;
-import com.agileboot.domain.social.client.dto.XhsLoginStatus;
-import com.agileboot.domain.social.client.dto.XhsUserBasicInfo;
-import com.agileboot.domain.social.client.dto.XhsQrcode;
+import com.agileboot.domain.social.client.dto.SocialLoginStatus;
+import com.agileboot.domain.social.client.dto.SocialQrcode;
+import com.agileboot.domain.social.client.dto.SocialUserProfile;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -38,6 +40,8 @@ public class SocialAccountApplicationService {
     private final SocialAccountService accountService;
 
     private final SocialAccountModelFactory accountModelFactory;
+
+    private final SocialPlatformClientFactory platformClientFactory;
 
     private final XhsApiClient xhsApiClient;
 
@@ -72,63 +76,66 @@ public class SocialAccountApplicationService {
     }
 
     /**
-     * 查询账号实时登录状态（透传账号容器）。
-     * 已登录时补充真实昵称/小红书号，并把小红书号回写到账号记录。
+     * 查询账号实时登录状态（按平台分发）。
+     * 已登录时补充真实昵称/平台UID，并把平台UID回写到账号记录。
      */
-    public XhsLoginStatus checkLoginStatus(Long accountId) {
-        SocialAccountEntity account = loadEnabledXhsAccount(accountId);
-        XhsLoginStatus status = xhsApiClient.checkLoginStatus(account.getId());
+    public SocialLoginStatus checkLoginStatus(Long accountId) {
+        SocialAccountEntity account = loadEnabledAccount(accountId);
+        SocialPlatformClient client = platformClientFactory.get(account.getPlatform());
+        SocialLoginStatus status = client.checkLoginStatus(account);
         if (Boolean.TRUE.equals(status.getIsLoggedIn())) {
-            enrichWithProfile(account, status);
+            enrichWithProfile(account, status, client);
         }
         return status;
     }
 
-    private void enrichWithProfile(SocialAccountEntity account, XhsLoginStatus status) {
+    private void enrichWithProfile(SocialAccountEntity account, SocialLoginStatus status,
+        SocialPlatformClient client) {
         try {
-            XhsUserBasicInfo basicInfo = xhsApiClient.getMyProfile(account.getId());
-            if (basicInfo == null) {
+            SocialUserProfile profile = client.getMyProfile(account);
+            if (profile == null) {
                 return;
             }
-            status.setNickname(basicInfo.getNickname());
-            status.setRedId(basicInfo.getRedId());
-            // 小红书号变化时回写（正常只会在首次登录后写一次）
-            if (basicInfo.getRedId() != null && !basicInfo.getRedId().equals(account.getXhsUserId())) {
-                account.setXhsUserId(basicInfo.getRedId());
+            status.setNickname(profile.getNickname());
+            status.setPlatformUid(profile.getPlatformUid());
+            // 平台UID变化时回写（正常只会在首次登录后写一次）
+            if (profile.getPlatformUid() != null
+                && !profile.getPlatformUid().equals(account.getPlatformUserId())) {
+                account.setPlatformUserId(profile.getPlatformUid());
                 account.updateById();
             }
         } catch (Exception e) {
-            // 主页信息获取失败不影响登录状态本身
-            log.warn("获取账号 {} 的小红书主页信息失败: {}", account.getId(), e.getMessage());
+            // 资料信息获取失败不影响登录状态本身
+            log.warn("获取账号 {} 的平台资料信息失败: {}", account.getId(), e.getMessage());
         }
     }
 
     /**
-     * 获取扫码登录二维码（透传账号容器）
+     * 获取扫码登录二维码（按平台分发）
      */
-    public XhsQrcode getLoginQrcode(Long accountId) {
-        SocialAccountEntity account = loadEnabledXhsAccount(accountId);
-        return xhsApiClient.getLoginQrcode(account.getId());
+    public SocialQrcode getLoginQrcode(Long accountId) {
+        SocialAccountEntity account = loadEnabledAccount(accountId);
+        return platformClientFactory.get(account.getPlatform()).getLoginQrcode(account);
     }
 
     /**
-     * 搜索笔记（透传账号容器，返回原始 data）
+     * 搜索笔记（xhs专属，透传账号容器，返回原始 data）
      */
     public JSON searchFeeds(Long accountId, String keyword) {
-        SocialAccountEntity account = loadEnabledXhsAccount(accountId);
+        SocialAccountEntity account = loadEnabledAccount(accountId);
+        if (!PLATFORM_XHS.equals(account.getPlatform())) {
+            throw new ApiException(Business.COMMON_UNSUPPORTED_OPERATION);
+        }
         return xhsApiClient.searchFeeds(account.getId(), keyword);
     }
 
-    private SocialAccountEntity loadEnabledXhsAccount(Long accountId) {
+    private SocialAccountEntity loadEnabledAccount(Long accountId) {
         SocialAccountEntity account = accountService.getById(accountId);
         if (account == null) {
             throw new ApiException(Client.COMMON_REQUEST_PARAMETERS_INVALID, "账号不存在: " + accountId);
         }
         if (account.getStatus() != null && account.getStatus() != 1) {
             throw new ApiException(Client.COMMON_REQUEST_PARAMETERS_INVALID, "账号已停用: " + accountId);
-        }
-        if (!PLATFORM_XHS.equals(account.getPlatform())) {
-            throw new ApiException(Business.COMMON_UNSUPPORTED_OPERATION);
         }
         return account;
     }

@@ -55,5 +55,12 @@ social:
   # 节点心跳令牌（X-Node-Token），与节点 agent 的 NODE_TOKEN 一致
   node-token: changeme
   http-timeout-ms: 90000
+  # B站API（直连官方web API，不经过住宅节点，base-url/port-base对bili不生效）
+  bilibili:
+    ua: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36
+    referer: https://www.bilibili.com
+    connect-timeout-ms: 10000
+    read-timeout-ms: 15000
+    qrcode-timeout-seconds: 180
 
 

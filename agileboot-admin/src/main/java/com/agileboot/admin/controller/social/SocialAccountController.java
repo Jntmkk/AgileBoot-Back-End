@@ -12,8 +12,8 @@ import com.agileboot.domain.social.account.command.SocialAccountAddCommand;
 import com.agileboot.domain.social.account.command.SocialAccountUpdateCommand;
 import com.agileboot.domain.social.account.dto.SocialAccountDTO;
 import com.agileboot.domain.social.account.query.SocialAccountQuery;
-import com.agileboot.domain.social.client.dto.XhsLoginStatus;
-import com.agileboot.domain.social.client.dto.XhsQrcode;
+import com.agileboot.domain.social.client.dto.SocialLoginStatus;
+import com.agileboot.domain.social.client.dto.SocialQrcode;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import java.util.List;
@@ -92,14 +92,14 @@ public class SocialAccountController extends BaseController {
     @Operation(summary = "查询账号实时登录状态")
     @PreAuthorize("@permission.has('social:account:login')")
     @GetMapping("/{id}/loginStatus")
-    public ResponseDTO<XhsLoginStatus> loginStatus(@PathVariable @NotNull @Positive Long id) {
+    public ResponseDTO<SocialLoginStatus> loginStatus(@PathVariable @NotNull @Positive Long id) {
         return ResponseDTO.ok(accountApplicationService.checkLoginStatus(id));
     }
 
     @Operation(summary = "获取扫码登录二维码")
     @PreAuthorize("@permission.has('social:account:login')")
     @GetMapping("/{id}/qrcode")
-    public ResponseDTO<XhsQrcode> qrcode(@PathVariable @NotNull @Positive Long id) {
+    public ResponseDTO<SocialQrcode> qrcode(@PathVariable @NotNull @Positive Long id) {
         return ResponseDTO.ok(accountApplicationService.getLoginQrcode(id));
     }
 

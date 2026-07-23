@@ -4,6 +4,7 @@ import cn.hutool.extra.spring.SpringUtil;
 import com.agileboot.infrastructure.cache.guava.AbstractGuavaCacheTemplate;
 import com.agileboot.infrastructure.cache.redis.RedisCacheTemplate;
 import com.agileboot.infrastructure.user.web.SystemLoginUser;
+import com.agileboot.domain.social.credential.BiliLoginSession;
 import com.agileboot.domain.system.dept.db.SysDeptEntity;
 import com.agileboot.domain.system.post.db.SysPostEntity;
 import com.agileboot.domain.system.role.db.SysRoleEntity;
@@ -34,6 +35,8 @@ public class CacheCenter {
 
     public static RedisCacheTemplate<SysPostEntity> postCache;
 
+    public static RedisCacheTemplate<BiliLoginSession> biliLoginSessionCache;
+
     @PostConstruct
     public void init() {
         GuavaCacheService guavaCache = SpringUtil.getBean(GuavaCacheService.class);
@@ -47,6 +50,7 @@ public class CacheCenter {
         userCache = redisCache.userCache;
         roleCache = redisCache.roleCache;
         postCache = redisCache.postCache;
+        biliLoginSessionCache = redisCache.biliLoginSessionCache;
     }
 
 }

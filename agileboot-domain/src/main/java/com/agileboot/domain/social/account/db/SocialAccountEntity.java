@@ -39,9 +39,9 @@ public class SocialAccountEntity extends BaseEntity<SocialAccountEntity> {
     @TableField("account_name")
     private String accountName;
 
-    @ApiModelProperty("平台侧用户ID（登录后回写）")
-    @TableField("xhs_user_id")
-    private String xhsUserId;
+    @ApiModelProperty("平台侧用户ID（登录后回写，小红书号/B站mid）")
+    @TableField("platform_user_id")
+    private String platformUserId;
 
     @ApiModelProperty("所在住宅节点名（运维参考）")
     @TableField("node_name")

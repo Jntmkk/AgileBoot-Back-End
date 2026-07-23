@@ -15,7 +15,7 @@ public class SocialAccountDTO {
             this.id = entity.getId() + "";
             this.platform = entity.getPlatform();
             this.accountName = entity.getAccountName();
-            this.xhsUserId = entity.getXhsUserId();
+            this.platformUserId = entity.getPlatformUserId();
             this.nodeName = entity.getNodeName();
             this.proxyUrl = entity.getProxyUrl();
             this.status = entity.getStatus();
@@ -32,7 +32,7 @@ public class SocialAccountDTO {
 
     private String accountName;
 
-    private String xhsUserId;
+    private String platformUserId;
 
     private String nodeName;
 
