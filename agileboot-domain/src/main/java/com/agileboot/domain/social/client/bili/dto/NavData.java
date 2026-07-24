@@ -1,6 +1,7 @@
 package com.agileboot.domain.social.client.bili.dto;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 
 /**
@@ -32,6 +33,7 @@ public class NavData {
     /**
      * WBI签名密钥（藏在假PNG URL里，需提取文件名作为img_key/sub_key）
      */
+    @JsonProperty("wbi_img")
     private WbiImg wbiImg;
 
     @Data
@@ -39,9 +41,11 @@ public class NavData {
     public static class WbiImg {
 
         /** 假PNG URL，如 https://i0.hdslb.com/bfs/wbi/xxx.png */
+        @JsonProperty("img_url")
         private String imgUrl;
 
         /** 假PNG URL，如 https://i0.hdslb.com/bfs/wbi/xxx.png */
+        @JsonProperty("sub_url")
         private String subUrl;
     }
 
