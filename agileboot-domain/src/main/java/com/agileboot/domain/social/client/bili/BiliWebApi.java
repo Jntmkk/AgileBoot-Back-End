@@ -1,11 +1,15 @@
 package com.agileboot.domain.social.client.bili;
 
 import com.agileboot.domain.social.client.bili.dto.BiliResp;
+import com.agileboot.domain.social.client.bili.dto.BiliSpaceVideoListData;
+import com.agileboot.domain.social.client.bili.dto.BiliWbiNavData;
 import com.agileboot.domain.social.client.bili.dto.NavData;
 import com.agileboot.domain.social.client.bili.dto.SpiData;
+import java.util.Map;
 import retrofit2.Call;
 import retrofit2.http.GET;
 import retrofit2.http.Header;
+import retrofit2.http.QueryMap;
 
 /**
  * B站主站API（api.bilibili.com）。
@@ -27,5 +31,19 @@ public interface BiliWebApi {
      */
     @GET("x/web-interface/nav")
     Call<BiliResp<NavData>> nav(@Header(BiliPassportApi.HEADER_ACCOUNT_ID) Long accountId);
+
+    /**
+     * WBI签名密钥（img_key + sub_key，约30分钟有效）
+     */
+    @GET("x/web-interface/wbi/index/nav")
+    Call<BiliResp<BiliWbiNavData>> wbiNav(@Header(BiliPassportApi.HEADER_ACCOUNT_ID) Long accountId);
+
+    /**
+     * UP主空间投稿搜索（旧版接口，无需WBI签名）。
+     */
+    @GET("x/space/arc/search")
+    Call<BiliResp<BiliSpaceVideoListData>> searchSpace(
+        @Header(BiliPassportApi.HEADER_ACCOUNT_ID) Long accountId,
+        @QueryMap(encoded = true) Map<String, String> params);
 
 }

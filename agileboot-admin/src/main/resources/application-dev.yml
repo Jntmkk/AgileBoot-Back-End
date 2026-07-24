@@ -103,3 +103,6 @@ agileboot:
     # 前端url请求转发前缀
     api-prefix: /dev-api
     demo-enabled: false
+    job:
+        artifact-base-dir: /tmp/agileboot/artifacts
+        scheduler-poll-interval-ms: 5000

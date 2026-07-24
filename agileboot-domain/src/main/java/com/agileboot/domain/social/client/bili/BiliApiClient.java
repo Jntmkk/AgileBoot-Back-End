@@ -3,11 +3,15 @@ package com.agileboot.domain.social.client.bili;
 import com.agileboot.common.exception.ApiException;
 import com.agileboot.common.exception.error.ErrorCode.Internal;
 import com.agileboot.domain.social.client.bili.dto.BiliResp;
+import com.agileboot.domain.social.client.bili.dto.BiliSpaceVideoListData;
+import com.agileboot.domain.social.client.bili.dto.BiliWbiNavData;
 import com.agileboot.domain.social.client.bili.dto.NavData;
 import com.agileboot.domain.social.client.bili.dto.QrcodeGenerateData;
 import com.agileboot.domain.social.client.bili.dto.QrcodePollData;
 import com.agileboot.domain.social.client.bili.dto.SpiData;
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -32,6 +36,8 @@ public class BiliApiClient {
     private final BiliPassportApi passportApi;
 
     private final BiliWebApi webApi;
+
+    private final BiliWbiSigner wbiSigner;
 
     public QrcodeGenerateData generateQrcode(Long accountId) {
         return unwrap(accountId, passportApi.generateQrcode(accountId), "qrcode/generate");
@@ -68,6 +74,32 @@ public class BiliApiClient {
 
     public SpiData spi(Long accountId) {
         return unwrap(accountId, webApi.spi(accountId), "finger/spi");
+    }
+
+    /**
+     * 获取WBI签名密钥（img_key + sub_key）。
+     */
+    public BiliWbiNavData wbiNav(Long accountId) {
+        return unwrap(accountId, webApi.wbiNav(accountId), "wbi/index/nav");
+    }
+
+    /**
+     * 搜索UP主空间投稿。
+     *
+     * @param accountId B站账号ID（0表示无需登录）
+     * @param mid UP主mid
+     * @param ps 每页条数（最大30）
+     * @param pn 页码
+     */
+    public BiliSpaceVideoListData searchSpace(Long accountId, Long mid, int ps, int pn) {
+        Map<String, String> params = new HashMap<>();
+        params.put("mid", String.valueOf(mid));
+        params.put("ps", String.valueOf(ps));
+        params.put("pn", String.valueOf(pn));
+        params.put("order", "pubdate");
+        params.put("tid", "0");
+        params.put("keyword", "");
+        return unwrap(accountId, webApi.searchSpace(accountId, params), "space/arc/search");
     }
 
     private <T> T unwrap(Long accountId, Call<BiliResp<T>> call, String apiName) {
