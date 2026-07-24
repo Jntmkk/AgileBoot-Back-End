@@ -4,7 +4,6 @@ import com.agileboot.common.exception.ApiException;
 import com.agileboot.common.exception.error.ErrorCode.Internal;
 import com.agileboot.domain.social.client.bili.dto.BiliResp;
 import com.agileboot.domain.social.client.bili.dto.BiliSpaceVideoListData;
-import com.agileboot.domain.social.client.bili.dto.BiliWbiNavData;
 import com.agileboot.domain.social.client.bili.dto.NavData;
 import com.agileboot.domain.social.client.bili.dto.QrcodeGenerateData;
 import com.agileboot.domain.social.client.bili.dto.QrcodePollData;
@@ -79,12 +78,8 @@ public class BiliApiClient {
     /**
      * 获取WBI签名密钥（img_key + sub_key）。
      */
-    public BiliWbiNavData wbiNav(Long accountId) {
-        return unwrap(accountId, webApi.wbiNav(accountId), "wbi/index/nav");
-    }
-
     /**
-     * 搜索UP主空间投稿。
+     * 搜索UP主空间投稿（需WBI签名）。
      *
      * @param accountId B站账号ID（0表示无需登录）
      * @param mid UP主mid
@@ -99,7 +94,8 @@ public class BiliApiClient {
         params.put("order", "pubdate");
         params.put("tid", "0");
         params.put("keyword", "");
-        return unwrap(accountId, webApi.searchSpace(accountId, params), "space/arc/search");
+        wbiSigner.sign(params);
+        return unwrap(accountId, webApi.searchSpace(accountId, params), "space/wbi/arc/search");
     }
 
     private <T> T unwrap(Long accountId, Call<BiliResp<T>> call, String apiName) {

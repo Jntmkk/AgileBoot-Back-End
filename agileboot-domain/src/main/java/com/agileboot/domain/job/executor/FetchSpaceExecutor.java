@@ -55,7 +55,7 @@ public class FetchSpaceExecutor implements StepExecutor {
 
         // 2. 调B站space API（失败时用mock数据完成E2E验证）
         try {
-            BiliSpaceVideoListData result = biliApiClient.searchSpace(0L, mid, 30, 1);
+            BiliSpaceVideoListData result = biliApiClient.searchSpace(2L, mid, 30, 1);
             List<BiliSpaceVideoItem> videos = result != null && result.getList() != null
                 ? result.getList().getVlist() : Collections.emptyList();
             log.info("fetch_space: mid={}, 获取到{}个视频", mid, videos.size());

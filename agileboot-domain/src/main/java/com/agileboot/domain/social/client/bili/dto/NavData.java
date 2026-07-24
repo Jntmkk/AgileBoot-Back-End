@@ -29,4 +29,20 @@ public class NavData {
      */
     private String face;
 
+    /**
+     * WBI签名密钥（藏在假PNG URL里，需提取文件名作为img_key/sub_key）
+     */
+    private WbiImg wbiImg;
+
+    @Data
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public static class WbiImg {
+
+        /** 假PNG URL，如 https://i0.hdslb.com/bfs/wbi/xxx.png */
+        private String imgUrl;
+
+        /** 假PNG URL，如 https://i0.hdslb.com/bfs/wbi/xxx.png */
+        private String subUrl;
+    }
+
 }

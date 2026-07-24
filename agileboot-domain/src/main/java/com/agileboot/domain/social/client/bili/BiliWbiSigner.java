@@ -2,10 +2,8 @@ package com.agileboot.domain.social.client.bili;
 
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.crypto.digest.MD5;
-import com.agileboot.common.exception.ApiException;
-import com.agileboot.common.exception.error.ErrorCode.Internal;
 import com.agileboot.domain.social.client.bili.dto.BiliResp;
-import com.agileboot.domain.social.client.bili.dto.BiliWbiNavData;
+import com.agileboot.domain.social.client.bili.dto.NavData;
 import java.io.IOException;
 import java.net.URLEncoder;
 import java.util.Map;
@@ -13,14 +11,10 @@ import java.util.TreeMap;
 import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
-import retrofit2.Call;
 import retrofit2.Response;
 
 /**
- * B站WBI签名器：缓存img_key/sub_key（30分钟），计算w_rid和wts。
- * <p>
- * 签名算法：params按key排序 → 拼接为k1=v1&k2=v2 →
- * 追加mixinKey → MD5 → 作为w_rid；wts取当前秒级时间戳。
+ * B站WBI签名器：从nav接口的wbi_img提取img_key/sub_key（缓存30分钟），计算w_rid和wts。
  * <p>
  * 直接使用 BiliWebApi 避免与 BiliApiClient 循环依赖。
  *
@@ -36,10 +30,7 @@ public class BiliWbiSigner {
         this.webApi = webApi;
     }
 
-    /**
-     * WBI mixin table — 从img_key+sub_key拼接串中按此索引取32位形成mixin key。
-     * B站不定期更新此表，若签名失败需更新。
-     */
+    /** WBI mixin permutation table（自2023年引入至今未变） */
     private static final int[] MIXIN_TABLE = {
         46, 47, 18, 2, 53, 8, 23, 32, 15, 50, 10, 31, 58, 3, 45, 35,
         27, 43, 5, 49, 33, 9, 42, 19, 29, 28, 14, 39, 12, 38, 41, 13,
@@ -47,18 +38,13 @@ public class BiliWbiSigner {
         22, 25, 54, 21, 56, 59, 6, 63, 57, 62, 11, 36, 20, 34, 44, 52
     };
 
-    /** 缓存的mixinKey */
     private volatile String cachedMixinKey;
-
-    /** 缓存时间戳 */
     private volatile long cachedAt;
-
-    /** 缓存有效期（30分钟），img_key/sub_key有效期约30分钟 */
     private static final long CACHE_TTL_MS = TimeUnit.MINUTES.toMillis(30);
 
     /**
-     * 获取mixinKey（带30分钟缓存）。
-     * 调wbi/index/nav接口获取img_key+sub_key，拼接后按mixin table取32位。
+     * 获取32位mixinKey（30分钟缓存）。
+     * 调nav接口 → 从wbi_img.img_url/sub_url提取文件名 → 拼接后按mixin table取32位。
      */
     public String getMixinKey() {
         if (cachedMixinKey != null && System.currentTimeMillis() - cachedAt < CACHE_TTL_MS) {
@@ -69,14 +55,29 @@ public class BiliWbiSigner {
                 return cachedMixinKey;
             }
             try {
-                BiliWbiNavData navData = fetchWbiNav();
-                if (navData == null || navData.getWbiImg() == null
-                    || StrUtil.isBlank(navData.getWbiImg().getImgKey())
-                    || StrUtil.isBlank(navData.getWbiImg().getSubKey())) {
-                    log.warn("获取WBI密钥失败，navData={}", navData);
-                    return cachedMixinKey; // 返回旧缓存兜底
+                // 用账号0调nav（无需登录也能拿到wbi_img）
+                Response<BiliResp<NavData>> response = webApi.nav(0L).execute();
+                if (!response.isSuccessful() || response.body() == null) {
+                    log.warn("nav HTTP错误: {}", response.code());
+                    return cachedMixinKey;
                 }
-                String raw = navData.getWbiImg().getImgKey() + navData.getWbiImg().getSubKey();
+                NavData navData = response.body().getData();
+                if (navData == null || navData.getWbiImg() == null) {
+                    log.warn("nav响应无wbi_img");
+                    return cachedMixinKey;
+                }
+                String imgUrl = navData.getWbiImg().getImgUrl();
+                String subUrl = navData.getWbiImg().getSubUrl();
+                if (StrUtil.isBlank(imgUrl) || StrUtil.isBlank(subUrl)) {
+                    log.warn("wbi_img URL为空");
+                    return cachedMixinKey;
+                }
+                // 从URL中提取文件名（去掉路径和扩展名）
+                String imgKey = extractKeyFromUrl(imgUrl);
+                String subKey = extractKeyFromUrl(subUrl);
+                log.debug("WBI keys: imgKey={}, subKey={}", imgKey, subKey);
+
+                String raw = imgKey + subKey;
                 StringBuilder mixinKey = new StringBuilder(32);
                 for (int idx : MIXIN_TABLE) {
                     if (idx < raw.length()) {
@@ -93,10 +94,21 @@ public class BiliWbiSigner {
         }
     }
 
+    /** 从URL路径中提取文件名（去掉路径前缀和扩展名） */
+    private static String extractKeyFromUrl(String url) {
+        if (url == null) {
+            return "";
+        }
+        // e.g. https://i0.hdslb.com/bfs/wbi/7cd084941338484aae1ad9425b84077c.png
+        int lastSlash = url.lastIndexOf('/');
+        String filename = lastSlash >= 0 ? url.substring(lastSlash + 1) : url;
+        int dot = filename.lastIndexOf('.');
+        return dot >= 0 ? filename.substring(0, dot) : filename;
+    }
+
     /**
-     * 对params签名：添加w_rid(MD5(sortedParams+mixinKey))和wts(秒级时间戳)。
-     *
-     * @param params 原始参数（会被修改，添加w_rid和wts）
+     * 对params签名：添加w_rid(MD5)和wts(秒级时间戳)。
+     * 签名后params中的值也被URL编码，配合@QueryMap(encoded=true)使用。
      */
     public void sign(Map<String, String> params) {
         String mixinKey = getMixinKey();
@@ -104,47 +116,27 @@ public class BiliWbiSigner {
             log.warn("WBI mixinKey为空，跳过签名");
             return;
         }
-        // 排序
         TreeMap<String, String> sorted = new TreeMap<>(params);
-        // 拼接 query string
         StringBuilder sb = new StringBuilder();
         for (Map.Entry<String, String> entry : sorted.entrySet()) {
             if (sb.length() > 0) {
                 sb.append('&');
             }
-            // WBI签名时value需要URL编码，但空格不转+号
             String encoded = URLEncoder.encode(entry.getValue());
-            // Java URLEncoder把空格编码为+，但B站WBI签名要求使用%20
             encoded = encoded.replace("+", "%20");
+            // 过滤掉!'()*字符（B站WBI要求）
+            encoded = encoded.replace("!", "%21").replace("'", "%27")
+                .replace("(", "%28").replace(")", "%29").replace("*", "%2A");
             sb.append(entry.getKey()).append('=').append(encoded);
+            // 同时更新params中的值为编码后的值，配合@QueryMap(encoded=true)
+            params.put(entry.getKey(), encoded);
         }
-        String queryString = sb.toString();
-        String signStr = queryString + mixinKey;
+        String signStr = sb + mixinKey;
         String wrid = MD5.create().digestHex(signStr);
         long wts = System.currentTimeMillis() / 1000;
 
         params.put("w_rid", wrid);
         params.put("wts", String.valueOf(wts));
-    }
-
-    private BiliWbiNavData fetchWbiNav() {
-        try {
-            Response<BiliResp<BiliWbiNavData>> response = webApi.wbiNav(0L).execute();
-            if (!response.isSuccessful()) {
-                log.warn("wbi/index/nav HTTP错误: {}", response.code());
-                return null;
-            }
-            BiliResp<BiliWbiNavData> body = response.body();
-            if (body == null || !body.success() || body.getData() == null) {
-                log.warn("wbi/index/nav 业务错误: code={}, message={}",
-                    body != null ? body.getCode() : null, body != null ? body.getMessage() : null);
-                return null;
-            }
-            return body.getData();
-        } catch (IOException e) {
-            log.warn("wbi/index/nav 调用失败: {}", e.getMessage());
-            return null;
-        }
     }
 
 }

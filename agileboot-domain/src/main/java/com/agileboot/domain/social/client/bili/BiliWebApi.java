@@ -2,7 +2,6 @@ package com.agileboot.domain.social.client.bili;
 
 import com.agileboot.domain.social.client.bili.dto.BiliResp;
 import com.agileboot.domain.social.client.bili.dto.BiliSpaceVideoListData;
-import com.agileboot.domain.social.client.bili.dto.BiliWbiNavData;
 import com.agileboot.domain.social.client.bili.dto.NavData;
 import com.agileboot.domain.social.client.bili.dto.SpiData;
 import java.util.Map;
@@ -33,15 +32,10 @@ public interface BiliWebApi {
     Call<BiliResp<NavData>> nav(@Header(BiliPassportApi.HEADER_ACCOUNT_ID) Long accountId);
 
     /**
-     * WBI签名密钥（img_key + sub_key，约30分钟有效）
+     * UP主空间投稿搜索（需WBI签名，params已包含mid/ps/pn/w_rid/wts）。
+     * encoded=true避免Retrofit对已编码的签名参数二次编码。
      */
-    @GET("x/web-interface/wbi/index/nav")
-    Call<BiliResp<BiliWbiNavData>> wbiNav(@Header(BiliPassportApi.HEADER_ACCOUNT_ID) Long accountId);
-
-    /**
-     * UP主空间投稿搜索（旧版接口，无需WBI签名）。
-     */
-    @GET("x/space/arc/search")
+    @GET("x/space/wbi/arc/search")
     Call<BiliResp<BiliSpaceVideoListData>> searchSpace(
         @Header(BiliPassportApi.HEADER_ACCOUNT_ID) Long accountId,
         @QueryMap(encoded = true) Map<String, String> params);
