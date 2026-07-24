@@ -55,8 +55,8 @@ public class BiliWbiSigner {
                 return cachedMixinKey;
             }
             try {
-                // 用账号0调nav（无需登录也能拿到wbi_img）
-                Response<BiliResp<NavData>> response = webApi.nav(0L).execute();
+                // 用已登录账号调nav（需cookie才能拿到wbi_img）
+                Response<BiliResp<NavData>> response = webApi.nav(2L).execute();
                 if (!response.isSuccessful() || response.body() == null) {
                     log.warn("nav HTTP错误: {}", response.code());
                     return cachedMixinKey;
