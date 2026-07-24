@@ -3,6 +3,7 @@ package com.agileboot.domain.social.client.bili;
 import com.agileboot.common.exception.ApiException;
 import com.agileboot.common.exception.error.ErrorCode.Internal;
 import com.agileboot.domain.social.client.bili.dto.BiliResp;
+import com.agileboot.domain.social.client.bili.dto.BiliSpaceDynamicData;
 import com.agileboot.domain.social.client.bili.dto.BiliSpaceVideoListData;
 import com.agileboot.domain.social.client.bili.dto.NavData;
 import com.agileboot.domain.social.client.bili.dto.QrcodeGenerateData;
@@ -96,6 +97,17 @@ public class BiliApiClient {
         params.put("keyword", "");
         wbiSigner.sign(params);
         return unwrap(accountId, webApi.searchSpace(accountId, params), "space/wbi/arc/search");
+    }
+
+    /**
+     * 获取用户空间动态（polymer端点，无需WBI签名，需登录cookie）。
+     *
+     * @param accountId B站账号ID
+     * @param hostMid UP主mid
+     */
+    public BiliSpaceDynamicData fetchSpaceDynamic(Long accountId, Long hostMid) {
+        return unwrap(accountId, webApi.fetchSpaceDynamic(accountId, hostMid),
+            "polymer/feed/space");
     }
 
     private <T> T unwrap(Long accountId, Call<BiliResp<T>> call, String apiName) {

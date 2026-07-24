@@ -79,7 +79,9 @@ public class BiliWbiSigner {
 
                 String raw = imgKey + subKey;
                 StringBuilder mixinKey = new StringBuilder(32);
-                for (int idx : MIXIN_TABLE) {
+                // 只取MIXIN_TABLE前32个索引，生成32位mixinKey
+                for (int i = 0; i < 32; i++) {
+                    int idx = MIXIN_TABLE[i];
                     if (idx < raw.length()) {
                         mixinKey.append(raw.charAt(idx));
                     }

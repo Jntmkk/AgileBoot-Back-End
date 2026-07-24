@@ -1,6 +1,7 @@
 package com.agileboot.domain.social.client.bili;
 
 import com.agileboot.domain.social.client.bili.dto.BiliResp;
+import com.agileboot.domain.social.client.bili.dto.BiliSpaceDynamicData;
 import com.agileboot.domain.social.client.bili.dto.BiliSpaceVideoListData;
 import com.agileboot.domain.social.client.bili.dto.NavData;
 import com.agileboot.domain.social.client.bili.dto.SpiData;
@@ -8,6 +9,7 @@ import java.util.Map;
 import retrofit2.Call;
 import retrofit2.http.GET;
 import retrofit2.http.Header;
+import retrofit2.http.Query;
 import retrofit2.http.QueryMap;
 
 /**
@@ -39,5 +41,14 @@ public interface BiliWebApi {
     Call<BiliResp<BiliSpaceVideoListData>> searchSpace(
         @Header(BiliPassportApi.HEADER_ACCOUNT_ID) Long accountId,
         @QueryMap(encoded = true) Map<String, String> params);
+
+    /**
+     * 用户空间动态（polymer端点，无需WBI签名，需登录cookie）。
+     * 返回包含视频投稿(MAJOR_TYPE_ARCHIVE)和图文动态的动态流。
+     */
+    @GET("x/polymer/web-dynamic/v1/feed/space")
+    Call<BiliResp<BiliSpaceDynamicData>> fetchSpaceDynamic(
+        @Header(BiliPassportApi.HEADER_ACCOUNT_ID) Long accountId,
+        @Query("host_mid") Long hostMid);
 
 }
