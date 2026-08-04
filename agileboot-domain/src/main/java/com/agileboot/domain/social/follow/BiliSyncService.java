@@ -10,7 +10,10 @@ import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.agileboot.common.exception.ApiException;
 import com.agileboot.common.exception.error.ErrorCode;
+import com.agileboot.domain.social.account.db.SocialAccountEntity;
+import com.agileboot.domain.social.account.db.SocialAccountService;
 import com.agileboot.domain.social.config.SocialMediaProperties;
+import com.agileboot.domain.social.credential.BiliCookieStore;
 import com.agileboot.domain.social.follow.command.BackfillCommand;
 import com.agileboot.domain.social.follow.command.SyncByLinkCommand;
 import com.agileboot.domain.social.follow.db.SocialFollowUpEntity;
@@ -47,6 +50,29 @@ public class BiliSyncService {
     private final SocialMediaProperties properties;
     private final SocialFollowUpService followUpService;
     private final SocialSyncPostService postService;
+    private final SocialAccountService accountService;
+    private final BiliCookieStore cookieStore;
+
+    private String getSyncCookie() {
+        // 优先使用 social_account + social_credential 里有效的 B站登录凭据
+        List<SocialAccountEntity> biliAccounts = accountService.lambdaQuery()
+            .eq(SocialAccountEntity::getPlatform, PLATFORM)
+            .eq(SocialAccountEntity::getStatus, 1)
+            .eq(SocialAccountEntity::getDeleted, false)
+            .list();
+        for (SocialAccountEntity account : biliAccounts) {
+            if (cookieStore.hasValidCredential(account.getId())) {
+                log.debug("使用账号 {} 的B站cookie同步", account.getId());
+                return cookieStore.buildCookieHeader(account.getId());
+            }
+        }
+        // 兜底：环境变量
+        String envCookie = properties.getBilibili().getSyncCookie();
+        if (StrUtil.isNotBlank(envCookie)) {
+            log.debug("使用环境变量 BILI_SYNC_COOKIE");
+        }
+        return envCookie;
+    }
 
     public void syncFeed() {
         List<SocialFollowUpEntity> ups = listEnabledUps();
@@ -125,7 +151,7 @@ public class BiliSyncService {
     }
 
     private PageFetchResult fetchPage(String hostMid, String offset) {
-        String cookie = properties.getBilibili().getSyncCookie();
+        String cookie = getSyncCookie();
         if (StrUtil.isBlank(cookie)) {
             log.warn("BILI_SYNC_COOKIE 未配置，跳过B站同步");
             return new PageFetchResult();
@@ -185,7 +211,7 @@ public class BiliSyncService {
     }
 
     private void saveDynamicById(String dynamicId) {
-        String cookie = properties.getBilibili().getSyncCookie();
+        String cookie = getSyncCookie();
         if (StrUtil.isBlank(cookie)) {
             throw new ApiException(ErrorCode.FAILED, "BILI_SYNC_COOKIE 未配置");
         }
@@ -213,7 +239,7 @@ public class BiliSyncService {
     }
 
     private void saveVideoByBvid(String bvid) {
-        String cookie = properties.getBilibili().getSyncCookie();
+        String cookie = getSyncCookie();
         StringBuilder url = new StringBuilder(VIEW_URL);
         url.append("?bvid=").append(bvid);
         String body = executeGet(url.toString(), cookie);
