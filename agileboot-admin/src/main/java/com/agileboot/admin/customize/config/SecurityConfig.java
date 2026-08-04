@@ -137,6 +137,8 @@ public class SecurityConfig {
             .antMatchers("/login", "/register", "/getConfig", "/captchaImage", "/api/**").anonymous()
             // 住宅节点 agent 心跳，用 X-Node-Token 头鉴权（见 SocialNodeController）
             .antMatchers(HttpMethod.POST, "/social/nodes/heartbeat").permitAll()
+            // n8n 定时触发 feed 同步，用 X-Sync-Token 头鉴权（见 SocialFollowUpController）
+            .antMatchers(HttpMethod.POST, "/social/follows/syncFeed").permitAll()
             .antMatchers(HttpMethod.GET, "/", "/*.html", "/**/*.html", "/**/*.css", "/**/*.js",
                 "/profile/**").permitAll()
             // TODO this is danger.
