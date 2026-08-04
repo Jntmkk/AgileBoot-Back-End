@@ -62,5 +62,12 @@ social:
     connect-timeout-ms: 10000
     read-timeout-ms: 15000
     qrcode-timeout-seconds: 180
+    sync-cookie: ${BILI_SYNC_COOKIE:}
+    sync-page-size: ${BILI_SYNC_PAGE_SIZE:50}
+  # n8n 动态同步触发配置（webhook 鉴权 + 超时）
+  n8n:
+    webhook-url: ${SOCIAL_N8N_WEBHOOK_URL:}
+    sync-token: ${SOCIAL_N8N_SYNC_TOKEN:}
+    timeout-ms: 15000
 
 

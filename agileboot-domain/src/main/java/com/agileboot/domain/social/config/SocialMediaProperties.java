@@ -32,6 +32,11 @@ public class SocialMediaProperties {
     private String nodeToken = "changeme";
 
     /**
+     * n8n 工作流接入配置（动态同步触发）
+     */
+    private N8n n8n = new N8n();
+
+    /**
      * 调用账号容器的 HTTP 超时（毫秒）。
      * 登录状态/二维码涉及浏览器导航，耗时较长。
      */
@@ -41,6 +46,25 @@ public class SocialMediaProperties {
      * B站API配置（直连官方web API，不经过住宅节点，baseUrl/portBase对bili不生效）
      */
     private Bilibili bilibili = new Bilibili();
+
+    @Data
+    public static class N8n {
+
+        /**
+         * n8n webhook 完整地址（含路径），如 https://n8n2.frxxz.top/webhook/bili-sync
+         */
+        private String webhookUrl = "";
+
+        /**
+         * webhook 鉴权令牌（X-Sync-Token 头），与 n8n webhook 节点校验一致
+         */
+        private String syncToken = "";
+
+        /**
+         * 调用 n8n webhook 的超时（毫秒）。webhook 只入队不等待全量执行，宜短
+         */
+        private int timeoutMs = 15000;
+    }
 
     @Data
     public static class Bilibili {
@@ -65,6 +89,17 @@ public class SocialMediaProperties {
          * 二维码有效期（秒），B站实际180s
          */
         private int qrcodeTimeoutSeconds = 180;
+
+        /**
+         * 动态同步专用的 B站登录 Cookie（含 SESSDATA）。
+         * 从环境变量 BILI_SYNC_COOKIE 注入，不提交到仓库。
+         */
+        private String syncCookie = "";
+
+        /**
+         * 单次拉取动态条数（polymer 端点）。
+         */
+        private int syncPageSize = 50;
     }
 
 }
