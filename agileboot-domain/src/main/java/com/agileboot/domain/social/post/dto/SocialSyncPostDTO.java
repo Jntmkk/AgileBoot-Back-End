@@ -30,6 +30,7 @@ public class SocialSyncPostDTO {
         this.platformPostUrl = e.getPlatformPostUrl();
         this.publishedAt = e.getPublishedAt();
         this.syncedAt = e.getSyncedAt();
+        this.createTime = e.getCreateTime();
         this.likeCount = e.getLikeCount();
         this.commentCount = e.getCommentCount();
         this.shareCount = e.getShareCount();
@@ -71,6 +72,8 @@ public class SocialSyncPostDTO {
     private Date publishedAt;
 
     private Date syncedAt;
+
+    private Date createTime;
 
     private Integer likeCount;
 

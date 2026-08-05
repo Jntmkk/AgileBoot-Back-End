@@ -30,13 +30,15 @@ public class SocialSyncPostQuery extends AbstractPageQuery<SocialSyncPostEntity>
 
     @Override
     public QueryWrapper<SocialSyncPostEntity> addQueryCondition() {
-        return new QueryWrapper<SocialSyncPostEntity>()
+        QueryWrapper<SocialSyncPostEntity> queryWrapper = new QueryWrapper<SocialSyncPostEntity>()
             .like(StrUtil.isNotEmpty(title), "title", title)
             .like(StrUtil.isNotEmpty(nickname), "nickname", nickname)
             .eq(StrUtil.isNotEmpty(platform), "platform", platform)
             .eq(postType != null, "post_type", postType)
-            .eq(audioStatus != null, "audio_status", audioStatus)
-            .orderByDesc("published_at")
-            .orderByDesc("id");
+            .eq(audioStatus != null, "audio_status", audioStatus);
+        if (StrUtil.isEmpty(this.getOrderColumn())) {
+            queryWrapper.orderByDesc("published_at").orderByDesc("id");
+        }
+        return queryWrapper;
     }
 }
