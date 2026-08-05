@@ -134,10 +134,12 @@ public class BiliSyncService {
         }
         String url = command.getUrl();
         Matcher bvidMatcher = BVID_PATTERN.matcher(url);
-        if (url.contains("/video/") || bvidMatcher.find()) {
-            String bvid = bvidMatcher.group();
-            saveVideoByBvid(bvid);
+        if (bvidMatcher.find()) {
+            saveVideoByBvid(bvidMatcher.group());
             return;
+        }
+        if (url.contains("/video/")) {
+            throw new ApiException(ErrorCode.Client.COMMON_REQUEST_PARAMETERS_INVALID, "无法从视频链接解析BV号");
         }
         if (url.contains("/dynamic/") || url.contains("/opus/") || url.contains("t.bilibili.com")) {
             Matcher m = DYNAMIC_ID_PATTERN.matcher(url);
