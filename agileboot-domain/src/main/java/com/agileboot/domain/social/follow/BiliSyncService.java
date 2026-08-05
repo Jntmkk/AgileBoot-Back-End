@@ -100,9 +100,19 @@ public class BiliSyncService {
             log.warn("暂不支持平台 {}", platform);
             return;
         }
-        List<SocialFollowUpEntity> ups = listEnabledUps();
-        if (CollUtil.isEmpty(ups)) {
-            throw new ApiException(ErrorCode.Client.COMMON_REQUEST_PARAMETERS_INVALID, "没有启用的同步UP");
+        List<SocialFollowUpEntity> ups;
+        if (StrUtil.isNotBlank(command.getUpId())) {
+            SocialFollowUpEntity up = getEnabledUpByUpId(command.getUpId());
+            if (up == null) {
+                throw new ApiException(ErrorCode.Client.COMMON_REQUEST_PARAMETERS_INVALID,
+                    "未找到指定的启用同步UP: " + command.getUpId());
+            }
+            ups = CollUtil.newArrayList(up);
+        } else {
+            ups = listEnabledUps();
+            if (CollUtil.isEmpty(ups)) {
+                throw new ApiException(ErrorCode.Client.COMMON_REQUEST_PARAMETERS_INVALID, "没有启用的同步UP");
+            }
         }
         Date start = command.getStartTime();
         Date end = command.getEndTime();
@@ -148,6 +158,16 @@ public class BiliSyncService {
             .eq(SocialFollowUpEntity::getSyncEnabled, 1)
             .eq(SocialFollowUpEntity::getDeleted, false)
             .list();
+    }
+
+    private SocialFollowUpEntity getEnabledUpByUpId(String upId) {
+        return followUpService.lambdaQuery()
+            .eq(SocialFollowUpEntity::getPlatform, PLATFORM)
+            .eq(SocialFollowUpEntity::getUpId, upId)
+            .eq(SocialFollowUpEntity::getStatus, 1)
+            .eq(SocialFollowUpEntity::getSyncEnabled, 1)
+            .eq(SocialFollowUpEntity::getDeleted, false)
+            .one();
     }
 
     private PageFetchResult fetchPage(String hostMid, String offset) {

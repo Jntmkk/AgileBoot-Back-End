@@ -23,4 +23,6 @@ public class BackfillCommand {
 
     private String platform;
 
+    private String upId;
+
 }
