@@ -69,5 +69,11 @@ social:
     webhook-url: ${SOCIAL_N8N_WEBHOOK_URL:}
     sync-token: ${SOCIAL_N8N_SYNC_TOKEN:}
     timeout-ms: 15000
+  # 云盘配置（alist 代理）
+  cloud-drive:
+    alist-url: ${ALIST_URL:http://localhost:5244}
+    local-alist-url: ${ALIST_LOCAL_URL:http://localhost:5244}
+    alist-token: ${ALIST_TOKEN:}
+    timeout-ms: 15000
 
 

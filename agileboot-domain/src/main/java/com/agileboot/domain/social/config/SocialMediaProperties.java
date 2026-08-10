@@ -47,6 +47,11 @@ public class SocialMediaProperties {
      */
     private Bilibili bilibili = new Bilibili();
 
+    /**
+     * 云盘配置（alist 代理）
+     */
+    private CloudDrive cloudDrive = new CloudDrive();
+
     @Data
     public static class N8n {
 
@@ -100,6 +105,32 @@ public class SocialMediaProperties {
          * 单次拉取动态条数（polymer 端点）。
          */
         private int syncPageSize = 50;
+    }
+
+    @Data
+    public static class CloudDrive {
+
+        /**
+         * alist API 地址（云端后端通过 frp 访问本机 alist）。
+         */
+        private String alistUrl = "http://localhost:5244";
+
+        /**
+         * 本机 alist 地址（worker 在 localhost 直接用，生成 download URL）。
+         * 为空时使用 alistUrl。
+         */
+        private String localAlistUrl = "http://localhost:5244";
+
+        /**
+         * alist 管理员 token（通过 /api/auth/login 获取）。
+         * 用于后端 API 调用认证。
+         */
+        private String alistToken = "";
+
+        /**
+         * 调用 alist API 的超时（毫秒）。
+         */
+        private int timeoutMs = 15000;
     }
 
 }
