@@ -141,6 +141,8 @@ public class SecurityConfig {
             .antMatchers(HttpMethod.POST, "/social/follows/syncFeed").permitAll()
             // n8n 匹配 AI 总结提示词，无鉴权
             .antMatchers(HttpMethod.GET, "/social/prompts/match").permitAll()
+            // n8n 触发云盘视频同步，用 X-Sync-Token 头鉴权（见 CloudDriveController）
+            .antMatchers(HttpMethod.POST, "/social/cloud-drive/sync").permitAll()
             .antMatchers(HttpMethod.GET, "/", "/*.html", "/**/*.html", "/**/*.css", "/**/*.js",
                 "/profile/**").permitAll()
             // TODO this is danger.
