@@ -123,6 +123,10 @@ public class SocialSyncPostEntity extends BaseEntity<SocialSyncPostEntity> {
     @TableField("audio_transcript")
     private String audioTranscript;
 
+    @ApiModelProperty("句子级转写时间戳（JSON数组）")
+    @TableField("audio_transcript_sentences")
+    private String audioTranscriptSentences;
+
     @ApiModelProperty("AI 内容总结")
     @TableField("audio_summary")
     private String audioSummary;

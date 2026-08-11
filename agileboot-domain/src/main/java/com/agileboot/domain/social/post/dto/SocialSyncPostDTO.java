@@ -41,6 +41,7 @@ public class SocialSyncPostDTO {
         this.remark = e.getRemark();
         // 长文本字段
         this.audioTranscript = e.getAudioTranscript();
+        this.audioSentenceTimestamps = e.getAudioTranscriptSentences();
         this.audioSummary = e.getAudioSummary();
         this.audioUrl = e.getAudioUrl();
     }
@@ -94,6 +95,8 @@ public class SocialSyncPostDTO {
     private String audioUrl;
 
     private String audioTranscript;
+
+    private String audioSentenceTimestamps;
 
     private String audioSummary;
 

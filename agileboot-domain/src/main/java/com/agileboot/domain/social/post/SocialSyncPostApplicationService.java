@@ -63,6 +63,7 @@ public class SocialSyncPostApplicationService {
         }
         entity.setAudioStatus(AUDIO_STATUS_READY);
         entity.setAudioTranscript(null);
+        entity.setAudioTranscriptSentences(null);
         entity.setAudioSummary(null);
         entity.setRemark("手动重触发转写");
         entity.updateById();
