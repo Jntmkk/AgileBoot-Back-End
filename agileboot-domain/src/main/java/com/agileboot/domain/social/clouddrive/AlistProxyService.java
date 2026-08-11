@@ -152,11 +152,22 @@ public class AlistProxyService {
         String alistUrl = properties.getCloudDrive().getAlistUrl();
         String url = alistUrl + "/api/admin/storage/create";
 
-        JSONObject addition = JSONUtil.createObj()
+        String clientId = properties.getCloudDrive().getAliyundriveClientId();
+        String clientSecret = properties.getCloudDrive().getAliyundriveClientSecret();
+
+        // addition 在 alist API 中是 JSON 字符串，不是对象
+        JSONObject additionObj = JSONUtil.createObj()
             .set("refresh_token", refreshToken)
             .set("root_folder_id", "root")
             .set("order_by", "name")
             .set("order_direction", "asc");
+        if (!clientId.isEmpty()) {
+            additionObj.set("client_id", clientId);
+        }
+        if (!clientSecret.isEmpty()) {
+            additionObj.set("client_secret", clientSecret);
+        }
+        String addition = additionObj.toString();
 
         JSONObject body = JSONUtil.createObj()
             .set("mount_path", mountPath)

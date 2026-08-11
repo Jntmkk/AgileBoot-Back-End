@@ -131,6 +131,16 @@ public class SocialMediaProperties {
          * 调用 alist API 的超时（毫秒）。
          */
         private int timeoutMs = 15000;
+
+        /**
+         * 阿里云盘 Open API 的 ClientID（从 alistgo 工具获取）。
+         */
+        private String aliyundriveClientId = "";
+
+        /**
+         * 阿里云盘 Open API 的 ClientSecret（从 alistgo 工具获取）。
+         */
+        private String aliyundriveClientSecret = "";
     }
 
 }
