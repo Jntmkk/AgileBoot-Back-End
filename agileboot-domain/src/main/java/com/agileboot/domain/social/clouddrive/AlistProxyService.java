@@ -142,4 +142,119 @@ public class AlistProxyService {
         }
         return localAlistUrl + "/d" + path;
     }
+
+    /**
+     * 创建阿里云盘 Open 存储后端。
+     *
+     * @return true 表示创建成功，false 表示已存在（mount_path 重复）
+     */
+    public boolean createAliyundriveStorage(String mountPath, String refreshToken) {
+        String alistUrl = properties.getCloudDrive().getAlistUrl();
+        String url = alistUrl + "/api/admin/storage/create";
+
+        JSONObject addition = JSONUtil.createObj()
+            .set("refresh_token", refreshToken)
+            .set("root_folder_id", "root")
+            .set("order_by", "name")
+            .set("order_direction", "asc");
+
+        JSONObject body = JSONUtil.createObj()
+            .set("mount_path", mountPath)
+            .set("driver", "AliyundriveOpen")
+            .set("cache_expiration", 30)
+            .set("status", "work")
+            .set("addition", addition);
+
+        String respBody;
+        try (HttpResponse response = HttpRequest.post(url)
+            .body(body.toString())
+            .header("Content-Type", "application/json")
+            .header("Authorization", properties.getCloudDrive().getAlistToken())
+            .timeout(properties.getCloudDrive().getTimeoutMs())
+            .execute()) {
+            respBody = response.body();
+        }
+
+        JSONObject resp = JSONUtil.parseObj(respBody);
+        int code = resp.getInt("code", -1);
+        if (code == 200) {
+            log.info("alist storage created: mount_path={}", mountPath);
+            return true;
+        }
+
+        String msg = resp.getStr("message", "unknown error");
+        if (msg != null && msg.contains("already exists")) {
+            log.info("alist storage already exists: mount_path={}", mountPath);
+            return false;
+        }
+
+        log.error("alist storage create failed: mount_path={}, code={}, msg={}", mountPath, code, msg);
+        throw new ApiException(ErrorCode.FAILED, "alist 创建存储失败: " + msg);
+    }
+
+    /**
+     * 删除 alist 存储后端。
+     */
+    public void removeStorage(String mountPath) {
+        String alistUrl = properties.getCloudDrive().getAlistUrl();
+
+        // 先通过 list 获取 storage id
+        JSONArray storages = listStorages();
+        Integer storageId = null;
+        for (int i = 0; i < storages.size(); i++) {
+            JSONObject s = storages.getJSONObject(i);
+            if (mountPath.equals(s.getStr("mount_path"))) {
+                storageId = s.getInt("id");
+                break;
+            }
+        }
+
+        if (storageId == null) {
+            log.info("alist storage not found for removal: mount_path={}", mountPath);
+            return;
+        }
+
+        String url = alistUrl + "/api/admin/storage/delete";
+        JSONObject body = JSONUtil.createObj().set("id", storageId);
+
+        String respBody;
+        try (HttpResponse response = HttpRequest.post(url)
+            .body(body.toString())
+            .header("Content-Type", "application/json")
+            .header("Authorization", properties.getCloudDrive().getAlistToken())
+            .timeout(properties.getCloudDrive().getTimeoutMs())
+            .execute()) {
+            respBody = response.body();
+        }
+
+        JSONObject resp = JSONUtil.parseObj(respBody);
+        int code = resp.getInt("code", -1);
+        if (code != 200) {
+            String msg = resp.getStr("message", "unknown error");
+            log.error("alist storage delete failed: mount_path={}, code={}, msg={}", mountPath, code, msg);
+            throw new ApiException(ErrorCode.FAILED, "alist 删除存储失败: " + msg);
+        }
+        log.info("alist storage removed: mount_path={}, id={}", mountPath, storageId);
+    }
+
+    private JSONArray listStorages() {
+        String alistUrl = properties.getCloudDrive().getAlistUrl();
+        String url = alistUrl + "/api/admin/storage/list";
+
+        String respBody;
+        try (HttpResponse response = HttpRequest.get(url)
+            .header("Authorization", properties.getCloudDrive().getAlistToken())
+            .timeout(properties.getCloudDrive().getTimeoutMs())
+            .execute()) {
+            respBody = response.body();
+        }
+
+        JSONObject resp = JSONUtil.parseObj(respBody);
+        int code = resp.getInt("code", -1);
+        if (code != 200) {
+            String msg = resp.getStr("message", "unknown error");
+            throw new ApiException(ErrorCode.FAILED, "alist 列出存储失败: " + msg);
+        }
+        return resp.getJSONObject("data").getJSONArray("content");
+    }
 }

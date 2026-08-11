@@ -5,6 +5,7 @@ import com.agileboot.common.core.page.PageDTO;
 import com.agileboot.common.exception.ApiException;
 import com.agileboot.common.exception.error.ErrorCode;
 import com.agileboot.domain.common.command.BulkOperationCommand;
+import com.agileboot.domain.social.clouddrive.AlistProxyService;
 import com.agileboot.domain.social.config.SocialMediaProperties;
 import com.agileboot.domain.social.follow.command.BackfillCommand;
 import com.agileboot.domain.social.follow.command.SocialFollowUpAddCommand;
@@ -34,6 +35,7 @@ public class SocialFollowUpApplicationService {
     private final SocialFollowUpService followService;
     private final BiliSyncService biliSyncService;
     private final SocialMediaProperties socialMediaProperties;
+    private final AlistProxyService alistProxyService;
 
     public PageDTO<SocialFollowUpDTO> getFollowList(SocialFollowUpQuery query) {
         Page<SocialFollowUpEntity> page = followService.page(query.toPage(), query.toQueryWrapper());
@@ -60,6 +62,18 @@ public class SocialFollowUpApplicationService {
         entity.setStatus(defaultValue(entity.getStatus(), 1));
         entity.setSyncEnabled(defaultValue(entity.getSyncEnabled(), 1));
         entity.insert();
+
+        if ("aliyun".equals(command.getPlatform())
+            && command.getRemark() != null
+            && command.getUpAvatar() != null) {
+            try {
+                alistProxyService.createAliyundriveStorage(
+                    command.getRemark(), command.getUpAvatar());
+            } catch (Exception e) {
+                log.error("auto-create alist storage failed: mount_path={}, err={}",
+                    command.getRemark(), e.getMessage());
+            }
+        }
     }
 
     public void updateFollow(SocialFollowUpUpdateCommand command) {
@@ -74,6 +88,18 @@ public class SocialFollowUpApplicationService {
     }
 
     public void deleteFollow(BulkOperationCommand<Long> command) {
+        for (Long id : command.getIds()) {
+            SocialFollowUpEntity entity = followService.getById(id);
+            if (entity != null && "aliyun".equals(entity.getPlatform())
+                && entity.getRemark() != null) {
+                try {
+                    alistProxyService.removeStorage(entity.getRemark());
+                } catch (Exception e) {
+                    log.error("auto-remove alist storage failed: mount_path={}, err={}",
+                        entity.getRemark(), e.getMessage());
+                }
+            }
+        }
         followService.removeBatchByIds(command.getIds());
     }
 
