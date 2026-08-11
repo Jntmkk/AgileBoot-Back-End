@@ -158,9 +158,8 @@ public class AlistProxyService {
         // addition 在 alist API 中是 JSON 字符串，不是对象
         JSONObject additionObj = JSONUtil.createObj()
             .set("refresh_token", refreshToken)
-            .set("root_folder_id", "root")
-            .set("order_by", "name")
-            .set("order_direction", "asc");
+            .set("oauth_token_url", "https://api.alistgo.com/alist/ali_open/token")
+            .set("root_folder_id", "root");
         if (!clientId.isEmpty()) {
             additionObj.set("client_id", clientId);
         }
