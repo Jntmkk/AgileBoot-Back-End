@@ -92,7 +92,6 @@ public class CloudDriveController extends BaseController {
      * 同步勾选的视频文件到 social_sync_post。
      */
     @Operation(summary = "同步勾选云盘视频")
-    @PreAuthorize("@permission.has('social:cloud-drive:query')")
     @PostMapping("/sync-selected")
     public ResponseDTO<Integer> syncSelected(
         @RequestBody List<String> paths,

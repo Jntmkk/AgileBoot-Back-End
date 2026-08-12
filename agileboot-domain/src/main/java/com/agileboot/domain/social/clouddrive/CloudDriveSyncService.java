@@ -82,7 +82,11 @@ public class CloudDriveSyncService {
             if (!VIDEO_EXTS.contains(ext)) {
                 continue;
             }
-            String basePath = path.substring(0, path.lastIndexOf('/'));
+            String basePath = "";
+            int lastSlash = path.lastIndexOf('/');
+            if (lastSlash > 0) {
+                basePath = path.substring(0, lastSlash);
+            }
             if (savePost(file, basePath)) {
                 synced++;
             }
