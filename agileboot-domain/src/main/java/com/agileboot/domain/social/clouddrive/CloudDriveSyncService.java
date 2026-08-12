@@ -58,6 +58,39 @@ public class CloudDriveSyncService {
         return synced;
     }
 
+    /**
+     * 同步勾选的指定文件路径到 social_sync_post（仅视频）。
+     *
+     * @param paths alist 文件完整路径列表
+     * @return 新同步的视频数量
+     */
+    public int syncSelectedFiles(List<String> paths) {
+        if (CollUtil.isEmpty(paths)) {
+            return 0;
+        }
+        log.info("开始同步阿里云盘勾选文件: {} 个", paths.size());
+        int synced = 0;
+        for (String path : paths) {
+            if (StrUtil.isBlank(path)) {
+                continue;
+            }
+            AlistFileInfo file = alistProxyService.getFile(path);
+            if (file == null || Boolean.TRUE.equals(file.getIsDir())) {
+                continue;
+            }
+            String ext = getFileExt(file.getName());
+            if (!VIDEO_EXTS.contains(ext)) {
+                continue;
+            }
+            String basePath = path.substring(0, path.lastIndexOf('/'));
+            if (savePost(file, basePath)) {
+                synced++;
+            }
+        }
+        log.info("阿里云盘勾选文件同步完成，选中 {} 个，新同步 {} 个视频", paths.size(), synced);
+        return synced;
+    }
+
     private List<AlistFileInfo> listAllFiles(String path) {
         List<AlistFileInfo> allFiles = new ArrayList<>();
         int page = 1;
