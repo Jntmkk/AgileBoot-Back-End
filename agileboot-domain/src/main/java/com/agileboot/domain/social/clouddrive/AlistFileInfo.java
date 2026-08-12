@@ -12,7 +12,7 @@ public class AlistFileInfo {
     private Long size;
     private Boolean isDir;
     private String modified;
-    /** alist 文件类型：1目录 2图片 3视频 4文档 5音频 6其他 */
+    /** alist 文件类型：0其他 1目录 2视频 3音频 4文档 5图片 */
     private Integer type;
     private String thumb;
     /** 下载直链 */
